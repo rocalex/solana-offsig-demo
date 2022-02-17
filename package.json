@@ -1,9 +1,6 @@
 {
     "dependencies": {
-        "@project-serum/anchor": "^0.20.1",
-        "@types/secp256k1": "^4.0.3",
-        "secp256k1": "^4.0.3",
-        "tweetnacl": "^1.0.3"
+        "@project-serum/anchor": "^0.20.1"
     },
     "devDependencies": {
         "@types/chai": "^4.3.0",

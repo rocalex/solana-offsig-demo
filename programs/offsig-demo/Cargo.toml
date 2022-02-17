@@ -16,6 +16,5 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-getrandom = { version = "0.1.16", features = ["dummy"] }
-libsecp256k1 = "0.6.0"
 anchor-lang = "0.21.0"
+byteorder = "1.4.3"
