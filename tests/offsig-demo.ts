@@ -1,4 +1,5 @@
 import assert from 'assert'
+import { createHash } from 'crypto'
 import * as ed from '@noble/ed25519'
 import * as anchor from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
@@ -40,20 +41,26 @@ describe('offsig-demo', () => {
 
     it('Is verified in frontend!', async () => {
         const message = Uint8Array.from([0xab, 0xbc, 0xcd, 0xde]);
-        const signature = await ed.sign(message, privateKey);
-        const isValid = await ed.verify(signature, message, groupKey);
+
+        const msgHash = createHash("SHA256").update(message).digest()
+        const signature = await ed.sign(msgHash, privateKey);
+        const isValid = await ed.verify(signature, msgHash, groupKey);
         assert.ok(isValid == true)
     });
 
     it('Is verified on chain', async () => {
         const message = Uint8Array.from([0xab, 0xbc, 0xcd, 0xde]);
-        const signature = await ed.sign(message, privateKey);
+
+        const msgHash = createHash("SHA256")
+            .update(message)
+            .digest()
+        const signature = await ed.sign(msgHash, privateKey);
         const verifyInstruction = anchor.web3.Ed25519Program.createInstructionWithPublicKey({
             publicKey: groupKey,
-            message: message,
+            message: msgHash,
             signature: signature
         })
-        const programInstruction = program.instruction.verify({
+        const programInstruction = program.instruction.verify(Buffer.from(message), {
             accounts: {
                 myAccount: myAccount.publicKey,
                 instructionAcc: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY

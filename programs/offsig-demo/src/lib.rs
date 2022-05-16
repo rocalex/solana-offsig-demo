@@ -10,13 +10,16 @@ struct Ed25519InstructionPart<'a> {
     msg_size: usize,
 }
 
-fn validate_action(instruction_acc: &AccountInfo, my_account: &Account<MyAccount>) -> Result<Vec<u8>> {
+fn validate_action(
+    instruction_acc: &AccountInfo,
+    my_account: &Account<MyAccount>,
+) -> Result<Vec<u8>> {
     let current_instruction =
         solana_program::sysvar::instructions::load_current_index_checked(&instruction_acc)?;
     if current_instruction == 0 {
         return Err(ErrorCode::InstructionAtWrongIndex.into());
     }
-    
+
     // The previous ix must be a ed25519 verification instruction
     let ed25519_ix_index = (current_instruction - 1) as u16;
     let ed25519_ix = match solana_program::sysvar::instructions::load_instruction_at_checked(
@@ -77,11 +80,14 @@ pub mod offsig_demo {
         Ok(())
     }
 
-    pub fn verify(ctx: Context<VerifyOffsig>) -> Result<()> {
+    pub fn verify(ctx: Context<VerifyOffsig>, message: Vec<u8>) -> Result<()> {
         let my_account = &mut ctx.accounts.my_account;
-        let message = validate_action(&ctx.accounts.instruction_acc, my_account)?;
-
-        msg!("Message: {:?}", message);
+        let ed25519_msg_hash = validate_action(&ctx.accounts.instruction_acc, my_account)?;
+        let msg_hash = solana_program::hash::hash(&message);
+        let msg_hash_vec = msg_hash.try_to_vec()?;
+        if !ed25519_msg_hash.eq(&msg_hash_vec) {
+            return Err(ErrorCode::InvalidVerification.into());
+        }
         Ok(())
     }
 }
@@ -119,4 +125,6 @@ pub enum ErrorCode {
     InvalidEd25519Instruction,
     #[msg("invalid group key")]
     InvalidGroupKey,
+    #[msg("invalid verification")]
+    InvalidVerification,
 }
